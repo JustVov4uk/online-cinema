@@ -15,6 +15,7 @@ pydantic-settings = "^2.14.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1.0"
 httpx = "^0.28.1"
+ruff = "^0.15.17"
 
 [build-system]
 requires = ["poetry-core"]
@@ -23,3 +24,10 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpath = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
