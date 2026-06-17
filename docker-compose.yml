@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: online_cinema_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - online_cinema_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  online_cinema_postgres_data:
