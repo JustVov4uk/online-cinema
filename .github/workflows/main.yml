@@ -8,6 +8,9 @@ jobs:
   checks:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
