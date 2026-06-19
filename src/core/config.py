@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Online Cinema API"
     API_V1_PREFIX: str = "/api/v1"
     DATABASE_URL: str
+    ALEMBIC_DATABASE_URL: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
