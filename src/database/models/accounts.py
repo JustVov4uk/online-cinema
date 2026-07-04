@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database.models import Base
@@ -11,6 +11,11 @@ class UserGroupEnum(StrEnum):
     USER = "USER"
     MODERATOR = "MODERATOR"
     ADMIN = "ADMIN"
+
+
+class GenderEnum(StrEnum):
+    MAN = "MAN"
+    WOMAN = "WOMAN"
 
 
 class UserGroup(Base):
@@ -47,3 +52,23 @@ class User(Base):
         nullable=False,
     )
     group_id: Mapped[int] = mapped_column(ForeignKey("user_groups.id"), nullable=False)
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    gender: Mapped[GenderEnum | None] = mapped_column(
+        Enum(GenderEnum, name="gender"),
+        nullable=True
+    )
+    date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    info: Mapped[str | None] = mapped_column(String(255), nullable=True)
