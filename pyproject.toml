@@ -15,6 +15,7 @@ asyncpg = "^0.31.0"
 alembic = "^1.18.4"
 psycopg = {extras = ["binary"], version = "^3.3.4"}
 email-validator = "^2.3.0"
+pwdlib = {extras = ["argon2"], version = "^0.3.0"}
 
 
 [tool.poetry.group.dev.dependencies]
