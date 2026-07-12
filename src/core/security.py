@@ -1,3 +1,5 @@
+import secrets
+
 from pwdlib import PasswordHash
 
 password_hash = PasswordHash.recommended()
@@ -9,3 +11,7 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash.verify(plain_password, hashed_password)
+
+
+def generate_secure_token() -> str:
+    return secrets.token_urlsafe(32)

@@ -1,12 +1,14 @@
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.security import hash_password
+from src.core.security import generate_secure_token, hash_password
 from src.database.models.accounts import UserGroupEnum
 from src.database.session import get_database
 from src.repositories.accounts import (
+    create_activation_token,
     create_user,
     get_user_by_email,
     get_user_group_by_name,
@@ -46,6 +48,16 @@ async def register_user(
         email=payload.email,
         hashed_password=hashed_password,
         group_id=user_group.id,
+    )
+
+    activation_token = generate_secure_token()
+    activation_token_expires_at = datetime.now(UTC) + timedelta(hours=24)
+
+    await create_activation_token(
+        session=session,
+        user_id=user.id,
+        token=activation_token,
+        expires_at=activation_token_expires_at,
     )
     await session.commit()
     return user
