@@ -49,3 +49,27 @@ async def create_activation_token(
     session.add(activation_token)
     await session.flush()
     return activation_token
+
+async def get_activation_token_by_token(
+        session: AsyncSession,
+        token: str,
+) -> ActivationToken | None:
+    statement = select(ActivationToken).where(ActivationToken.token == token)
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()
+
+async def activate_user(
+        session: AsyncSession,
+        user: User,
+) -> User:
+    user.is_active = True
+    await session.flush()
+    await session.refresh(user)
+    return user
+
+async def delete_activation_token(
+        session: AsyncSession,
+        activation_token: ActivationToken,
+) -> None:
+    await session.delete(activation_token)
+    await session.flush()

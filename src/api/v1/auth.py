@@ -5,15 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.security import generate_secure_token, hash_password
-from src.database.models.accounts import UserGroupEnum
+from src.database.models.accounts import User, UserGroupEnum
 from src.database.session import get_database
 from src.repositories.accounts import (
+    activate_user,
     create_activation_token,
     create_user,
+    delete_activation_token,
+    get_activation_token_by_token,
     get_user_by_email,
     get_user_group_by_name,
 )
-from src.schemas.accounts import UserCreate, UserRead
+from src.schemas.accounts import UserActivation, UserCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -60,4 +63,44 @@ async def register_user(
         expires_at=activation_token_expires_at,
     )
     await session.commit()
+    return user
+
+@router.post("/activate", response_model=UserRead)
+async def activate_account(
+        payload: UserActivation,
+        session: Annotated[AsyncSession, Depends(get_database)],
+):
+    activation_token = await get_activation_token_by_token(
+        session=session,
+        token=payload.token,
+    )
+    if activation_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid activation token.",
+        )
+
+    if activation_token.expires_at < datetime.now(UTC):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Activation token has expired.",
+        )
+    user = await session.get(User, activation_token.user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User for this activation token does not exist.",
+        )
+
+    if user.is_active:
+        await delete_activation_token(session, activation_token)
+        await session.commit()
+        return user
+
+    user = await activate_user(session, user)
+    await delete_activation_token(session, activation_token)
+
+    await session.commit()
+
     return user

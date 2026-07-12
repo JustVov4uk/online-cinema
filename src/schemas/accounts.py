@@ -36,3 +36,7 @@ class UserProfileUpdate(UserProfileBase):
 class UserProfileRead(UserProfileBase):
     id: int
     user_id: int
+
+
+class UserActivation(BaseModel):
+    token: str
