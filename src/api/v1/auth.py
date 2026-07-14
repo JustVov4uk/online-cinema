@@ -4,7 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.security import generate_secure_token, hash_password
+from src.core.security import (
+    create_access_token,
+    create_refresh_token,
+    generate_secure_token,
+    hash_password,
+    verify_password,
+)
 from src.database.models.accounts import User, UserGroupEnum
 from src.database.session import get_database
 from src.repositories.accounts import (
@@ -16,7 +22,13 @@ from src.repositories.accounts import (
     get_user_by_email,
     get_user_group_by_name,
 )
-from src.schemas.accounts import UserActivation, UserCreate, UserRead
+from src.schemas.accounts import (
+    TokenPair,
+    UserActivation,
+    UserCreate,
+    UserLogin,
+    UserRead,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -104,3 +116,36 @@ async def activate_account(
     await session.commit()
 
     return user
+
+@router.post("/login", response_model=TokenPair)
+async def login_user(
+        payload: UserLogin,
+        session: Annotated[AsyncSession, Depends(get_database)],
+):
+    user = await get_user_by_email(session, payload.email)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    if not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is not active.",
+        )
+
+    access_token = create_access_token(subject=str(user.id))
+    refresh_token = create_refresh_token(subject=str(user.id))
+
+    return TokenPair(
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
