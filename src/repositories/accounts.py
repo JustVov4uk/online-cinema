@@ -103,3 +103,10 @@ async def get_refresh_token_by_token(
     statement = select(RefreshToken).where(RefreshToken.token == token)
     result = await session.execute(statement)
     return result.scalar_one_or_none()
+
+async def delete_refresh_token(
+        session: AsyncSession,
+        refresh_token: RefreshToken,
+) -> None:
+    await session.delete(refresh_token)
+    await session.flush()

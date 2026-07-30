@@ -21,6 +21,7 @@ from src.repositories.accounts import (
     create_refresh_token_record,
     create_user,
     delete_activation_token,
+    delete_refresh_token,
     get_activation_token_by_token,
     get_refresh_token_by_token,
     get_user_by_email,
@@ -209,3 +210,21 @@ async def refresh_access_token(
     access_token = create_access_token(subject=user_id)
 
     return AccessTokenResponse(access_token=access_token)
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout_user(
+        payload: RefreshTokenRequest,
+        session: Annotated[AsyncSession, Depends(get_database)],
+) -> None:
+    refresh_token_record = await get_refresh_token_by_token(
+        session=session,
+        token=payload.refresh_token,
+    )
+
+    if refresh_token_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token.",
+        )
+    await delete_refresh_token(session, refresh_token_record)
+    await session.commit()
