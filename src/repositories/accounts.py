@@ -95,3 +95,11 @@ async def delete_activation_token(
 ) -> None:
     await session.delete(activation_token)
     await session.flush()
+
+async def get_refresh_token_by_token(
+        session: AsyncSession,
+        token: str,
+) -> RefreshToken | None:
+    statement = select(RefreshToken).where(RefreshToken.token == token)
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()

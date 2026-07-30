@@ -8,6 +8,7 @@ from src.core.config import get_settings
 from src.core.security import (
     create_access_token,
     create_refresh_token,
+    decode_token,
     generate_secure_token,
     hash_password,
     verify_password,
@@ -21,10 +22,13 @@ from src.repositories.accounts import (
     create_user,
     delete_activation_token,
     get_activation_token_by_token,
+    get_refresh_token_by_token,
     get_user_by_email,
     get_user_group_by_name,
 )
 from src.schemas.accounts import (
+    AccessTokenResponse,
+    RefreshTokenRequest,
     TokenPair,
     UserActivation,
     UserCreate,
@@ -164,3 +168,44 @@ async def login_user(
         access_token=access_token,
         refresh_token=refresh_token,
     )
+
+@router.post("/refresh", response_model=AccessTokenResponse)
+async def refresh_access_token(
+    payload: RefreshTokenRequest,
+    session: Annotated[AsyncSession, Depends(get_database)],
+):
+    refresh_token_record = await get_refresh_token_by_token(
+        session=session,
+        token=payload.refresh_token,
+    )
+
+    if refresh_token_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token.",
+        )
+
+    if refresh_token_record.expires_at < datetime.now(UTC):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has expired.",
+        )
+
+    token_payload = decode_token(payload.refresh_token)
+
+    if token_payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type.",
+        )
+
+    user_id = token_payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token.",
+        )
+
+    access_token = create_access_token(subject=user_id)
+
+    return AccessTokenResponse(access_token=access_token)
