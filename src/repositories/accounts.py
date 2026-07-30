@@ -3,7 +3,13 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models.accounts import ActivationToken, User, UserGroup, UserGroupEnum
+from src.database.models.accounts import (
+    ActivationToken,
+    RefreshToken,
+    User,
+    UserGroup,
+    UserGroupEnum,
+)
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
@@ -49,6 +55,22 @@ async def create_activation_token(
     session.add(activation_token)
     await session.flush()
     return activation_token
+
+async def create_refresh_token_record(
+        session: AsyncSession,
+        user_id: int,
+        token: str,
+        expires_at: datetime,
+) -> RefreshToken:
+    refresh_token = RefreshToken(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at,
+    )
+    session.add(refresh_token)
+    await session.flush()
+
+    return refresh_token
 
 async def get_activation_token_by_token(
         session: AsyncSession,

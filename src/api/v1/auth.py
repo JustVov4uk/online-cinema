@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import get_settings
 from src.core.security import (
     create_access_token,
     create_refresh_token,
@@ -16,6 +17,7 @@ from src.database.session import get_database
 from src.repositories.accounts import (
     activate_user,
     create_activation_token,
+    create_refresh_token_record,
     create_user,
     delete_activation_token,
     get_activation_token_by_token,
@@ -144,6 +146,19 @@ async def login_user(
 
     access_token = create_access_token(subject=str(user.id))
     refresh_token = create_refresh_token(subject=str(user.id))
+    settings = get_settings()
+    refresh_token_expires_at = datetime.now(UTC) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+
+    await create_refresh_token_record(
+        session=session,
+        user_id=user.id,
+        token=refresh_token,
+        expires_at=refresh_token_expires_at,
+    )
+
+    await session.commit()
 
     return TokenPair(
         access_token=access_token,
