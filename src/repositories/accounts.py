@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.accounts import (
     ActivationToken,
+    PasswordResetToken,
     RefreshToken,
     User,
     UserGroup,
@@ -110,3 +111,21 @@ async def delete_refresh_token(
 ) -> None:
     await session.delete(refresh_token)
     await session.flush()
+
+async def create_password_reset_token(
+        session: AsyncSession,
+        user_id: int,
+        token: str,
+        expires_at: datetime,
+) -> PasswordResetToken:
+
+    password_reset_token = PasswordResetToken(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at,
+    )
+
+    session.add(password_reset_token)
+    await session.flush()
+
+    return password_reset_token

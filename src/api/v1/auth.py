@@ -18,6 +18,7 @@ from src.database.session import get_database
 from src.repositories.accounts import (
     activate_user,
     create_activation_token,
+    create_password_reset_token,
     create_refresh_token_record,
     create_user,
     delete_activation_token,
@@ -29,6 +30,8 @@ from src.repositories.accounts import (
 )
 from src.schemas.accounts import (
     AccessTokenResponse,
+    PasswordResetRequest,
+    PasswordResetResponse,
     RefreshTokenRequest,
     TokenPair,
     UserActivation,
@@ -228,3 +231,31 @@ async def logout_user(
         )
     await delete_refresh_token(session, refresh_token_record)
     await session.commit()
+
+@router.post("/password-reset/request", response_model=PasswordResetResponse)
+async def request_password_reset(
+    payload: PasswordResetRequest,
+    session: Annotated[AsyncSession, Depends(get_database)],
+):
+    user = await get_user_by_email(session, payload.email)
+
+    response = PasswordResetResponse(
+        message="If this email exists, password reset instructions were sent."
+    )
+
+    if user is None:
+        return response
+
+    reset_token = generate_secure_token()
+    reset_token_expires_at = datetime.now(UTC) + timedelta(hours=1)
+
+    await create_password_reset_token(
+        session=session,
+        user_id=user.id,
+        token=reset_token,
+        expires_at=reset_token_expires_at,
+    )
+
+    await session.commit()
+
+    return response
