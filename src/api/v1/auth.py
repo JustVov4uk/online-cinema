@@ -22,14 +22,18 @@ from src.repositories.accounts import (
     create_refresh_token_record,
     create_user,
     delete_activation_token,
+    delete_password_reset_token,
     delete_refresh_token,
     get_activation_token_by_token,
+    get_password_reset_token_by_token,
     get_refresh_token_by_token,
     get_user_by_email,
     get_user_group_by_name,
+    update_user_password,
 )
 from src.schemas.accounts import (
     AccessTokenResponse,
+    PasswordResetConfirm,
     PasswordResetRequest,
     PasswordResetResponse,
     RefreshTokenRequest,
@@ -259,3 +263,44 @@ async def request_password_reset(
     await session.commit()
 
     return response
+
+@router.post("/password-reset/confirm", response_model=PasswordResetResponse)
+async def password_reset_confirm(
+    payload: PasswordResetConfirm,
+    session: Annotated[AsyncSession, Depends(get_database)],
+):
+    password_reset_token = await get_password_reset_token_by_token(
+        session=session,
+        token=payload.token,
+    )
+
+    if password_reset_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid password reset token",
+        )
+
+    if password_reset_token.expires_at < datetime.now(UTC):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password reset token has expired.",
+        )
+    user = await session.get(User, password_reset_token.user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User for this password reset token does not exist.",
+        )
+
+    hashed_password = hash_password(payload.new_password)
+
+    await update_user_password(
+        session=session,
+        user=user,
+        hashed_password=hashed_password,
+    )
+    await delete_password_reset_token(session, password_reset_token)
+    await session.commit()
+
+    return PasswordResetResponse(message="Password has been reset successfully.")

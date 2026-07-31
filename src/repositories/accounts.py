@@ -129,3 +129,28 @@ async def create_password_reset_token(
     await session.flush()
 
     return password_reset_token
+
+async def get_password_reset_token_by_token(
+        session: AsyncSession,
+        token: str,
+) -> PasswordResetToken | None:
+    statement = select(PasswordResetToken).where(PasswordResetToken.token == token)
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()
+
+async def update_user_password(
+        session: AsyncSession,
+        user: User,
+        hashed_password: str,
+) -> User:
+    user.hashed_password = hashed_password
+    await session.flush()
+    await session.refresh(user)
+    return user
+
+async def delete_password_reset_token(
+        session: AsyncSession,
+        password_reset_token: PasswordResetToken,
+) -> None:
+    await session.delete(password_reset_token)
+    await session.flush()
