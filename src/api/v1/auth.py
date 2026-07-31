@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.api.dependencies.auth import get_current_user
 from src.core.config import get_settings
 from src.core.security import (
     create_access_token,
@@ -304,3 +305,9 @@ async def password_reset_confirm(
     await session.commit()
 
     return PasswordResetResponse(message="Password has been reset successfully.")
+
+@router.get("/me", response_model=UserRead)
+async def get_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    return current_user
