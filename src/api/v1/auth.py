@@ -34,6 +34,7 @@ from src.repositories.accounts import (
 )
 from src.schemas.accounts import (
     AccessTokenResponse,
+    PasswordChangeRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
     PasswordResetResponse,
@@ -311,3 +312,26 @@ async def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     return current_user
+
+@router.post("/password-change", response_model=PasswordResetResponse)
+async def change_password(
+    payload: PasswordChangeRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_database)],
+):
+    if not verify_password(payload.old_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Old password is incorrect.",
+        )
+
+    hashed_password = hash_password(payload.new_password)
+
+    await update_user_password(
+        session=session,
+        user=current_user,
+        hashed_password=hashed_password,
+    )
+    await session.commit()
+
+    return PasswordResetResponse(message="Password has been changed successfully.")
