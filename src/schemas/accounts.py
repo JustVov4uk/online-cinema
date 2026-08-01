@@ -78,3 +78,11 @@ class PasswordResetConfirm(BaseModel):
 class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class ActivationResendRequest(BaseModel):
+    email: EmailStr
+
+
+class ActivationResendResponse(BaseModel):
+    message: str

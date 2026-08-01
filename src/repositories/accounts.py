@@ -154,3 +154,16 @@ async def delete_password_reset_token(
 ) -> None:
     await session.delete(password_reset_token)
     await session.flush()
+
+async def delete_activation_tokens_for_user(
+    session: AsyncSession,
+    user_id: int,
+) -> None:
+    statement = select(ActivationToken).where(ActivationToken.user_id == user_id)
+    result = await session.execute(statement)
+    activation_tokens = result.scalars().all()
+
+    for activation_token in activation_tokens:
+        await session.delete(activation_token)
+
+    await session.flush()

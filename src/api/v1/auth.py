@@ -23,6 +23,7 @@ from src.repositories.accounts import (
     create_refresh_token_record,
     create_user,
     delete_activation_token,
+    delete_activation_tokens_for_user,
     delete_password_reset_token,
     delete_refresh_token,
     get_activation_token_by_token,
@@ -34,6 +35,8 @@ from src.repositories.accounts import (
 )
 from src.schemas.accounts import (
     AccessTokenResponse,
+    ActivationResendRequest,
+    ActivationResendResponse,
     PasswordChangeRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
@@ -335,3 +338,37 @@ async def change_password(
     await session.commit()
 
     return PasswordResetResponse(message="Password has been changed successfully.")
+
+@router.post("/activation/resend", response_model=ActivationResendResponse)
+async def resend_activation_token(
+    payload: ActivationResendRequest,
+    session: Annotated[AsyncSession, Depends(get_database)],
+):
+    response = ActivationResendResponse(
+        message="If this email exists and is not active,"
+                " activation instructions were sent."
+    )
+
+    user = await get_user_by_email(session, payload.email)
+
+    if user is None or user.is_active:
+        return response
+
+    await delete_activation_tokens_for_user(
+        session=session,
+        user_id=user.id,
+    )
+
+    activation_token = generate_secure_token()
+    activation_token_expires_at = datetime.now(UTC) + timedelta(hours=24)
+
+    await create_activation_token(
+        session=session,
+        user_id=user.id,
+        token=activation_token,
+        expires_at=activation_token_expires_at,
+    )
+
+    await session.commit()
+
+    return response
