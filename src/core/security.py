@@ -30,6 +30,7 @@ def create_access_token(subject: str) -> str:
     payload = {
         "sub": subject,
         "type": "access",
+        "jti": generate_secure_token(),
         "exp": expires_at,
     }
     return jwt.encode(
@@ -47,6 +48,7 @@ def create_refresh_token(subject: str) -> str:
     payload = {
         "sub": subject,
         "type": "refresh",
+        "jti": generate_secure_token(),
         "exp": expires_at,
     }
     return jwt.encode(
