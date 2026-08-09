@@ -31,3 +31,9 @@ def test_get_me_success_returns_current_user(client: TestClient) -> None:
     assert me_response.status_code == 200
     assert me_response.json()["email"] == email
     assert me_response.json()["is_active"] is True
+
+
+def test_get_me_without_token_returns_403(client: TestClient) -> None:
+    me_response = client.get("/api/v1/auth/me")
+
+    assert me_response.status_code == 401
