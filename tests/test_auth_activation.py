@@ -87,3 +87,33 @@ def test_activate_user_with_same_token_twice_returns_400(client: TestClient) -> 
 
     assert second_activation_response.status_code == 400
     assert second_activation_response.json() == {"detail": "Invalid activation token."}
+
+
+def test_resend_activation_token_for_inactive_user_replaces_old_token(
+    client: TestClient,
+) -> None:
+    email = unique_email()
+    password = "StrongPassword123"
+
+    register_response = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": password},
+    )
+    assert register_response.status_code == 201
+
+    old_token = get_activation_token_from_database(email)
+
+    resend_response = client.post(
+        "/api/v1/auth/activation/resend",
+        json={"email": email},
+    )
+
+    assert resend_response.status_code == 200
+    assert resend_response.json() == {
+        "message": "If this email exists and is not active,"
+                   " activation instructions were sent."
+    }
+
+    new_token = get_activation_token_from_database(email)
+
+    assert new_token != old_token
