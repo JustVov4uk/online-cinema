@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.database.models.cart import Cart, CartItem
+from src.database.models.movies import Movie
 
 
 async def get_cart_by_user_id(
@@ -15,6 +16,16 @@ async def get_cart_by_user_id(
         .options(
             selectinload(Cart.items)
             .selectinload(CartItem.movie)
+            .selectinload(Movie.director),
+            selectinload(Cart.items)
+            .selectinload(CartItem.movie)
+            .selectinload(Movie.certification),
+            selectinload(Cart.items)
+            .selectinload(CartItem.movie)
+            .selectinload(Movie.genres),
+            selectinload(Cart.items)
+            .selectinload(CartItem.movie)
+            .selectinload(Movie.stars),
         )
     )
     result = await session.execute(statement)

@@ -32,6 +32,16 @@ async def retrieve_cart(
     )
     await session.commit()
 
+    cart = await get_cart_by_user_id(
+        session=session,
+        user_id=current_user.id,
+    )
+    if cart is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Cart could not be loaded.",
+        )
+
     return cart
 
 
