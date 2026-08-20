@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from src.api.v1.auth import router as auth_router
+from src.api.v1.cart import router as cart_router
 from src.api.v1.health import router as health_router
 from src.api.v1.movies import router as movies_router
 from src.core.config import get_settings
@@ -12,3 +13,4 @@ app = FastAPI(title=settings.PROJECT_NAME)
 app.include_router(health_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(movies_router, prefix=settings.API_V1_PREFIX)
+app.include_router(cart_router, prefix=settings.API_V1_PREFIX)

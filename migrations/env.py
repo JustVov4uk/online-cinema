@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+import src.database.models.cart as cart_models
 import src.database.models.movies as movie_models
 from src.core.config import get_settings
 from src.database.models import Base
@@ -25,7 +26,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
-_ = movie_models
+_ = (movie_models, cart_models)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
