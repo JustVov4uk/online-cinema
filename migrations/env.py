@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 import src.database.models.cart as cart_models
 import src.database.models.movies as movie_models
 import src.database.models.orders as order_models
+import src.database.models.payments as payment_models
 from src.core.config import get_settings
 from src.database.models import Base
 from src.database.models.accounts import UserGroup  # noqa: F401
@@ -27,7 +28,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
-_ = (cart_models, movie_models, order_models)
+_ = (cart_models, movie_models, order_models, payment_models)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
