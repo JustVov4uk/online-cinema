@@ -8,6 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN groupadd --system app && useradd --system --gid app --create-home app
+
 RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 
 COPY pyproject.toml poetry.lock ./
@@ -17,6 +19,8 @@ RUN poetry install --only main --no-root
 COPY alembic.ini ./
 COPY migrations ./migrations
 COPY src ./src
+
+USER app
 
 EXPOSE 8000
 
