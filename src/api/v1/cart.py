@@ -15,6 +15,7 @@ from src.repositories.cart import (
     remove_cart_item,
 )
 from src.repositories.movies import get_movie_by_id
+from src.repositories.purchased import get_purchased_movie_by_user_and_movie
 from src.schemas.cart import CartItemCreate, CartRead
 
 router = APIRouter(prefix="/cart", tags=["cart"])
@@ -58,6 +59,17 @@ async def add_cart_item(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie not found.",
+        )
+
+    purchased_movie = await get_purchased_movie_by_user_and_movie(
+        session=session,
+        user_id=current_user.id,
+        movie_id=payload.movie_id,
+    )
+    if purchased_movie is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Movie is already purchased.",
         )
 
     cart = await get_or_create_cart(
