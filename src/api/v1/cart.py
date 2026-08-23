@@ -11,7 +11,6 @@ from src.repositories.cart import (
     clear_cart,
     get_cart_by_user_id,
     get_cart_item_by_cart_and_movie,
-    get_cart_item_by_id,
     get_or_create_cart,
     remove_cart_item,
 )
@@ -92,9 +91,9 @@ async def add_cart_item(
     return cart
 
 
-@router.delete("/items/{cart_item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/items/{movie_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cart_item(
-    cart_item_id: int,
+    movie_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_database)],
 ) -> None:
@@ -103,10 +102,10 @@ async def delete_cart_item(
         user_id=current_user.id,
     )
 
-    cart_item = await get_cart_item_by_id(
+    cart_item = await get_cart_item_by_cart_and_movie(
         session=session,
         cart_id=cart.id,
-        cart_item_id=cart_item_id,
+        movie_id=movie_id,
     )
     if cart_item is None:
         raise HTTPException(
@@ -121,7 +120,7 @@ async def delete_cart_item(
     await session.commit()
 
 
-@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/items", status_code=status.HTTP_204_NO_CONTENT)
 async def clear_user_cart(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_database)],
