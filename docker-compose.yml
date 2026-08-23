@@ -1,4 +1,19 @@
 services:
+  app:
+    build:
+      context: .
+    container_name: online_cinema_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://online_cinema:online_cinema_password@db:5432/online_cinema
+      ALEMBIC_DATABASE_URL: postgresql+psycopg://online_cinema:online_cinema_password@db:5432/online_cinema
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
   db:
     image: postgres:16-alpine
     container_name: online_cinema_db
