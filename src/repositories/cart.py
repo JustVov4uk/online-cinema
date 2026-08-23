@@ -27,6 +27,7 @@ async def get_cart_by_user_id(
             .selectinload(CartItem.movie)
             .selectinload(Movie.stars),
         )
+        .execution_options(populate_existing=True)
     )
     result = await session.execute(statement)
     return result.scalar_one_or_none()
@@ -44,10 +45,9 @@ async def get_or_create_cart(
     if cart is not None:
         return cart
 
-    cart = Cart(user_id=user_id)
+    cart = Cart(user_id=user_id, items=[])
     session.add(cart)
     await session.flush()
-    await session.refresh(cart)
 
     return cart
 

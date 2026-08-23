@@ -118,10 +118,10 @@ def test_delete_cart_item_removes_item_from_cart(client: TestClient) -> None:
         headers=headers,
     )
     assert add_response.status_code == 201
-    cart_item_id = add_response.json()["items"][0]["id"]
+    assert add_response.json()["items"][0]["movie"]["id"] == movie_id
 
     delete_response = client.delete(
-        f"/api/v1/cart/items/{cart_item_id}",
+        f"/api/v1/cart/items/{movie_id}",
         headers=headers,
     )
 
@@ -157,7 +157,7 @@ def test_clear_cart_removes_all_items(client: TestClient) -> None:
     assert second_add_response.status_code == 201
 
     clear_response = client.delete(
-        "/api/v1/cart/",
+        "/api/v1/cart/items",
         headers=headers,
     )
 
