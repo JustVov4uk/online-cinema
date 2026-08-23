@@ -7,6 +7,10 @@ from sqlalchemy.orm import selectinload
 from src.database.models.movies import Movie
 from src.database.models.orders import Order, OrderItem, OrderStatus
 from src.database.models.payments import Payment, PaymentItem, PaymentStatus
+from src.repositories.purchased import (
+    create_purchased_movies_for_order,
+    create_purchased_movies_for_payment,
+)
 
 
 def _payment_load_options() -> tuple:
@@ -58,6 +62,10 @@ async def create_payment_for_order(
 
     if status == PaymentStatus.SUCCESSFUL:
         order.status = OrderStatus.PAID
+        await create_purchased_movies_for_order(
+            session=session,
+            order=order,
+        )
 
     await session.flush()
     await session.refresh(payment)
@@ -163,6 +171,10 @@ async def update_payment_status(
 
     if status == PaymentStatus.SUCCESSFUL:
         payment.order.status = OrderStatus.PAID
+        await create_purchased_movies_for_payment(
+            session=session,
+            payment=payment,
+        )
 
     await session.flush()
     await session.refresh(payment)

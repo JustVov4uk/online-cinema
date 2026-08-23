@@ -15,9 +15,9 @@ from src.repositories.orders import (
     get_order_by_id,
     get_orders,
     get_orders_for_user,
-    get_paid_movie_ids_for_user,
     get_pending_order_with_movie_ids,
 )
+from src.repositories.purchased import get_purchased_movie_ids_for_user
 from src.schemas.orders import OrderCreateResponse, OrderRead
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -49,14 +49,18 @@ async def create_order_from_cart(
             detail="Cart is empty.",
         )
 
-    paid_movie_ids = await get_paid_movie_ids_for_user(
+    cart_movie_ids = [item.movie_id for item in cart.items]
+    purchased_movie_ids = await get_purchased_movie_ids_for_user(
         session=session,
         user_id=current_user.id,
+        movie_ids=cart_movie_ids,
     )
     excluded_movie_ids = [
-        item.movie_id for item in cart.items if item.movie_id in paid_movie_ids
+        item.movie_id for item in cart.items if item.movie_id in purchased_movie_ids
     ]
-    order_items = [item for item in cart.items if item.movie_id not in paid_movie_ids]
+    order_items = [
+        item for item in cart.items if item.movie_id not in purchased_movie_ids
+    ]
 
     if not order_items:
         raise HTTPException(
