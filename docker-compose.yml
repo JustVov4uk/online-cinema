@@ -12,7 +12,22 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      migrator:
+        condition: service_completed_successfully
+
+  migrator:
+    build:
+      context: .
+    container_name: online_cinema_migrator
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://online_cinema:online_cinema_password@db:5432/online_cinema
+      ALEMBIC_DATABASE_URL: postgresql+psycopg://online_cinema:online_cinema_password@db:5432/online_cinema
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -24,6 +39,11 @@ services:
       - "5432:5432"
     volumes:
       - online_cinema_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U online_cinema -d online_cinema"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   online_cinema_postgres_data:
