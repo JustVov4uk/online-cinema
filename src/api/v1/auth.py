@@ -48,7 +48,7 @@ from src.schemas.accounts import (
     UserLogin,
     UserRead,
 )
-from src.services.email import send_activation_email, send_password_reset_email
+from src.tasks.email import send_activation_email_task, send_password_reset_email_task
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -95,12 +95,10 @@ async def register_user(
         expires_at=activation_token_expires_at,
     )
 
-    send_activation_email(
-        email=user.email,
-        token=activation_token,
-    )
-
     await session.commit()
+
+    send_activation_email_task.delay(user.email, activation_token)
+
     return user
 
 @router.post("/activate", response_model=UserRead)
@@ -272,12 +270,9 @@ async def request_password_reset(
         expires_at=reset_token_expires_at,
     )
 
-    send_password_reset_email(
-        email=user.email,
-        token=reset_token,
-    )
-
     await session.commit()
+
+    send_password_reset_email_task.delay(user.email, reset_token)
 
     return response
 
@@ -381,11 +376,8 @@ async def resend_activation_token(
         expires_at=activation_token_expires_at,
     )
 
-    send_activation_email(
-        email=user.email,
-        token=activation_token,
-    )
-
     await session.commit()
+
+    send_activation_email_task.delay(user.email, activation_token)
 
     return response
