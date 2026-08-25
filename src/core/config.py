@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
     CELERY_TASK_ALWAYS_EAGER: bool = False
     CELERY_DELETE_EXPIRED_TOKENS_INTERVAL_SECONDS: int = 3600
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    EMAIL_FROM: str = "no-reply@online-cinema.local"
+    FRONTEND_BASE_URL: str = "http://localhost:8000"
+    EMAIL_ENABLED: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",
