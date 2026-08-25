@@ -8,7 +8,7 @@ celery_app = Celery(
     "online_cinema",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["src.tasks.email"],
+    include=["src.tasks.email", "src.tasks.tokens"],
 )
 
 celery_app.conf.update(
@@ -19,4 +19,10 @@ celery_app.conf.update(
     enable_utc=True,
     task_always_eager=settings.CELERY_TASK_ALWAYS_EAGER,
     task_eager_propagates=True,
+    beat_schedule={
+        "delete-expired-auth-tokens": {
+            "task": "tokens.delete_expired_auth_tokens",
+            "schedule": settings.CELERY_DELETE_EXPIRED_TOKENS_INTERVAL_SECONDS,
+        },
+    },
 )
