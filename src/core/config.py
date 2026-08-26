@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "no-reply@online-cinema.local"
     FRONTEND_BASE_URL: str = "http://localhost:8000"
     EMAIL_ENABLED: bool = True
+    S3_ENDPOINT_URL: str = "http://localhost:9000"
+    S3_ACCESS_KEY: str = "online_cinema_minio"
+    S3_SECRET_KEY: str = "online_cinema_minio_password"
+    S3_BUCKET_NAME: str = "online-cinema-media"
+    S3_PUBLIC_BASE_URL: str = "http://localhost:9000/online-cinema-media"
+    AVATAR_MAX_SIZE_BYTES: int = 2_000_000
 
     model_config = SettingsConfigDict(
         env_file=".env",

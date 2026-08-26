@@ -10,6 +10,7 @@ from src.database.models.accounts import (
     User,
     UserGroup,
     UserGroupEnum,
+    UserProfile,
 )
 
 
@@ -147,6 +148,43 @@ async def update_user_password(
     await session.flush()
     await session.refresh(user)
     return user
+
+async def get_user_profile_by_user_id(
+    session: AsyncSession,
+    user_id: int,
+) -> UserProfile | None:
+    statement = select(UserProfile).where(UserProfile.user_id == user_id)
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()
+
+async def get_or_create_user_profile(
+    session: AsyncSession,
+    user_id: int,
+) -> UserProfile:
+    user_profile = await get_user_profile_by_user_id(
+        session=session,
+        user_id=user_id,
+    )
+
+    if user_profile is not None:
+        return user_profile
+
+    user_profile = UserProfile(user_id=user_id)
+    session.add(user_profile)
+    await session.flush()
+    await session.refresh(user_profile)
+
+    return user_profile
+
+async def update_user_profile_avatar(
+    session: AsyncSession,
+    user_profile: UserProfile,
+    avatar_url: str,
+) -> UserProfile:
+    user_profile.avatar = avatar_url
+    await session.flush()
+    await session.refresh(user_profile)
+    return user_profile
 
 async def delete_password_reset_token(
         session: AsyncSession,

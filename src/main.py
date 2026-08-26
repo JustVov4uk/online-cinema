@@ -8,6 +8,7 @@ from src.api.v1.orders import admin_router as admin_orders_router
 from src.api.v1.orders import router as orders_router
 from src.api.v1.payments import admin_router as admin_payments_router
 from src.api.v1.payments import router as payments_router
+from src.api.v1.profiles import router as profiles_router
 from src.core.config import get_settings
 
 settings = get_settings()
@@ -22,3 +23,4 @@ app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(profiles_router, prefix=settings.API_V1_PREFIX)
