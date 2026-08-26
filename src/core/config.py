@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "online-cinema-media"
     S3_PUBLIC_BASE_URL: str = "http://localhost:9000/online-cinema-media"
     AVATAR_MAX_SIZE_BYTES: int = 2_000_000
+    MOCK_PAYMENT_BASE_URL: str = "http://localhost:8000/mock-payments"
 
     model_config = SettingsConfigDict(
         env_file=".env",

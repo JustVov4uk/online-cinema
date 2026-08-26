@@ -56,7 +56,6 @@ async def upload_avatar(
         avatar_url = await run_in_threadpool(
             upload_avatar_to_storage,
             user_id=current_user.id,
-            filename=file.filename or "avatar.jpg",
             content=content,
             content_type=file.content_type or "application/octet-stream",
         )

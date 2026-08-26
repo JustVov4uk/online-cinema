@@ -59,12 +59,10 @@ def test_upload_avatar_success_updates_current_user_profile(
     def fake_upload_avatar_to_storage(
         *,
         user_id: int,
-        filename: str,
         content: bytes,
         content_type: str,
     ) -> str:
         assert user_id > 0
-        assert filename == "avatar.png"
         assert content == b"fake-png-content"
         assert content_type == "image/png"
         return avatar_url

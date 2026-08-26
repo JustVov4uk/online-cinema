@@ -47,6 +47,7 @@ jobs:
       S3_SECRET_KEY: test
       S3_BUCKET_NAME: test-media
       S3_PUBLIC_BASE_URL: http://localhost:9000/test-media
+      MOCK_PAYMENT_BASE_URL: http://localhost:8000/mock-payments
       JWT_SECRET_KEY: test-secret-key-with-at-least-32-characters
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
