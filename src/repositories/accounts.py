@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.accounts import (
@@ -10,6 +10,7 @@ from src.database.models.accounts import (
     User,
     UserGroup,
     UserGroupEnum,
+    UserProfile,
 )
 
 
@@ -148,6 +149,43 @@ async def update_user_password(
     await session.refresh(user)
     return user
 
+async def get_user_profile_by_user_id(
+    session: AsyncSession,
+    user_id: int,
+) -> UserProfile | None:
+    statement = select(UserProfile).where(UserProfile.user_id == user_id)
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()
+
+async def get_or_create_user_profile(
+    session: AsyncSession,
+    user_id: int,
+) -> UserProfile:
+    user_profile = await get_user_profile_by_user_id(
+        session=session,
+        user_id=user_id,
+    )
+
+    if user_profile is not None:
+        return user_profile
+
+    user_profile = UserProfile(user_id=user_id)
+    session.add(user_profile)
+    await session.flush()
+    await session.refresh(user_profile)
+
+    return user_profile
+
+async def update_user_profile_avatar(
+    session: AsyncSession,
+    user_profile: UserProfile,
+    avatar_url: str,
+) -> UserProfile:
+    user_profile.avatar = avatar_url
+    await session.flush()
+    await session.refresh(user_profile)
+    return user_profile
+
 async def delete_password_reset_token(
         session: AsyncSession,
         password_reset_token: PasswordResetToken,
@@ -167,3 +205,19 @@ async def delete_activation_tokens_for_user(
         await session.delete(activation_token)
 
     await session.flush()
+
+async def delete_expired_auth_tokens(
+    session: AsyncSession,
+    now: datetime,
+) -> tuple[int, int]:
+    activation_statement = delete(ActivationToken).where(
+        ActivationToken.expires_at < now
+    )
+    activation_result = await session.execute(activation_statement)
+
+    password_reset_statement = delete(PasswordResetToken).where(
+        PasswordResetToken.expires_at < now
+    )
+    password_reset_result = await session.execute(password_reset_statement)
+
+    return activation_result.rowcount or 0, password_reset_result.rowcount or 0

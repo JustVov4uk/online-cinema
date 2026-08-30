@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.dependencies.auth import get_current_user, require_admin
+from src.core.config import get_settings
 from src.database.models.accounts import User, UserGroup, UserGroupEnum
 from src.database.models.orders import Order, OrderStatus
 from src.database.models.payments import PaymentStatus
@@ -97,12 +98,13 @@ async def create_payment_session(
     _validate_order_total(order)
 
     external_payment_id = f"mock_{uuid4().hex}"
+    settings = get_settings()
 
     return PaymentSessionRead(
         order_id=order.id,
         amount=order.total_amount,
         external_payment_id=external_payment_id,
-        payment_url=f"http://localhost:8000/mock-payments/{external_payment_id}",
+        payment_url=f"{settings.MOCK_PAYMENT_BASE_URL}/{external_payment_id}",
     )
 
 
