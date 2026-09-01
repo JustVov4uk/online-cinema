@@ -2,55 +2,93 @@
 
 [![CI](https://github.com/JustVov4uk/online-cinema/actions/workflows/main.yml/badge.svg)](https://github.com/JustVov4uk/online-cinema/actions/workflows/main.yml)
 
-Online Cinema API is a FastAPI backend project for a movie streaming platform.
-It covers the main backend flows of a real product: authentication, movie catalog,
-shopping cart, orders, payments, purchased movies, background jobs, file storage,
-Docker infrastructure, API documentation, and automated tests.
+Backend API for an online cinema platform built with FastAPI, async SQLAlchemy,
+PostgreSQL, Docker, Celery, Redis, MinIO, and automated tests.
 
-The project is built as a portfolio-ready backend application with a clear
-layered structure and production-like tooling.
+The project is designed as a portfolio backend application: it does not stop at
+basic CRUD, but connects real backend concerns into one working system:
+authentication, token lifecycle, catalog management, shopping cart, orders,
+payments, purchased content, background jobs, object storage, CI, and deployment.
+
+## Live Demo
+
+| Resource | URL |
+| --- | --- |
+| Swagger UI | `http://18.196.243.210/docs` |
+| ReDoc | `http://18.196.243.210/redoc` |
+| Health check | `http://18.196.243.210/api/v1/health/` |
+
+The demo is deployed on AWS EC2 and runs through Docker Compose.
+
+## Why This Project Matters
+
+This project demonstrates the kind of backend work that appears in real products:
+
+- secure account flows with JWT, refresh tokens, activation, logout, and password reset;
+- relational database design with SQLAlchemy models, constraints, and migrations;
+- async database access with PostgreSQL and SQLAlchemy 2.0;
+- API separation into routes, schemas, repositories, services, and background tasks;
+- infrastructure with Docker Compose, PostgreSQL, Redis, Celery, MailHog, and MinIO;
+- automated quality checks with Ruff, Pytest, Alembic, and GitHub Actions;
+- live AWS deployment that can be opened and tested from a browser.
 
 ## Tech Stack
 
 | Area | Technology |
 | --- | --- |
 | API framework | FastAPI |
+| Language | Python 3.12 |
 | Database | PostgreSQL |
 | ORM | SQLAlchemy 2.0 async |
 | Migrations | Alembic |
-| Validation | Pydantic |
-| Auth | JWT, Argon2 password hashing |
+| Data validation | Pydantic |
+| Authentication | JWT, Argon2 password hashing |
 | Background jobs | Celery, Celery Beat |
-| Broker / result backend | Redis |
+| Message broker | Redis |
 | Email testing | MailHog |
 | Object storage | MinIO / S3-compatible storage |
 | Dependency management | Poetry |
 | Code quality | Ruff |
 | Tests | Pytest, FastAPI TestClient |
-| Containerization | Docker, Docker Compose |
+| Containers | Docker, Docker Compose |
 | CI | GitHub Actions |
+| Deployment | AWS EC2 |
+
+## Core Product Flow
+
+```text
+User registers
+  -> receives activation email
+  -> activates account
+  -> logs in and receives JWT tokens
+  -> browses movies
+  -> adds movies to cart
+  -> creates order
+  -> creates payment
+  -> successful payment unlocks purchased movies
+```
 
 ## Implemented Features
 
 ### Authentication and Accounts
 
 - User registration with email activation.
-- Account activation token flow.
+- Activation token confirmation.
 - Resend activation email.
 - JWT login with access and refresh tokens.
 - Refresh access token.
-- Logout by deleting refresh token from the database.
-- Current user endpoint.
+- Logout by removing refresh token from the database.
+- Current authenticated user endpoint.
 - Password reset request and confirmation.
 - Authenticated password change.
 - User groups: user, moderator, admin.
 - User profile with avatar upload.
 
-### Movies
+### Movie Catalog
 
-- Movie catalog.
-- Movie details.
-- Create, update, and delete movie records.
+- Movie list endpoint.
+- Movie detail endpoint.
+- Movie create, update, and delete endpoints.
 - Genres, stars, directors, certifications, and related movie metadata.
 - Pagination with `skip` and `limit`.
 
@@ -58,15 +96,15 @@ layered structure and production-like tooling.
 
 - One cart per user.
 - Add movie to cart.
-- Remove one movie from cart.
+- Remove movie from cart.
 - Clear cart.
-- Unique cart item rule: one movie can appear only once in a user's cart.
+- Unique constraint for `(cart_id, movie_id)`.
 
 ### Orders
 
 - Create order from cart items.
-- View authenticated user's orders.
-- View order details.
+- List authenticated user's orders.
+- Get order details.
 - Cancel order.
 - Admin order listing.
 
@@ -75,34 +113,36 @@ layered structure and production-like tooling.
 - Create payment for an order.
 - Store payment records.
 - Payment webhook endpoint.
-- View user's payments.
-- View payment details.
+- List authenticated user's payments.
+- Get payment details.
 - Admin payment listing.
-- Mock payment URL support for local development.
+- Mock payment URL support for local development and demo flow.
 
 ### Purchased Movies
 
 - Store movies purchased by a user.
 - Prevent duplicate purchased movie records for the same user and movie.
-- Purchased movies are created after successful payment flow.
+- Connect successful payment flow with access to purchased content.
 
 ### Infrastructure
 
-- PostgreSQL, Redis, MailHog, MinIO, API, Celery worker, and Celery Beat run with Docker Compose.
-- Alembic migrations run in a dedicated `migrator` container.
-- Celery Beat schedules cleanup of expired activation and password reset tokens.
-- GitHub Actions runs Ruff, migrations, tests, and Docker image build.
-- Swagger/OpenAPI documentation is available for all endpoints.
+- Docker Compose stack with API, PostgreSQL, Redis, Celery worker, Celery Beat,
+  MailHog, MinIO, and Alembic migrator.
+- Celery Beat scheduled job for expired activation/password reset token cleanup.
+- MinIO bucket setup for avatar/media-like file storage.
+- MailHog for local activation and password reset email testing.
+- GitHub Actions for linting, migrations, tests, and Docker image build.
+- Swagger/OpenAPI documentation for all endpoints.
 
 ## API Documentation
 
-After starting the project, open:
+Swagger UI:
 
 ```text
 http://localhost:8000/docs
 ```
 
-Alternative ReDoc documentation:
+ReDoc:
 
 ```text
 http://localhost:8000/redoc
@@ -150,47 +190,47 @@ http://localhost:8000/openapi.json
 | `GET` | `/api/v1/admin/payments/` | Admin payment listing |
 | `POST` | `/api/v1/profile/avatar` | Upload user avatar |
 
-## Project Structure
+## Architecture
+
+The application uses a layered backend structure:
+
+```text
+HTTP request
+  -> FastAPI route
+  -> Pydantic schema validation
+  -> service/repository logic
+  -> SQLAlchemy async session
+  -> PostgreSQL
+```
+
+Project layout:
 
 ```text
 src/
   api/
     dependencies/      Shared FastAPI dependencies
-    v1/                API route handlers
-  core/                App settings, security, Celery configuration
+    v1/                Route handlers grouped by feature
+  core/                Settings, security helpers, Celery app
   database/
-    models/            SQLAlchemy models
-    session.py         Async database session
+    models/            SQLAlchemy models and relationships
+    session.py         Async database engine and session factory
   repositories/        Database query layer
   schemas/             Pydantic request and response schemas
-  services/            External services: email, storage
-  tasks/               Celery background tasks
+  services/            Email and S3-compatible storage services
+  tasks/               Celery tasks
   main.py              FastAPI application entrypoint
 
-migrations/            Alembic migrations
-tests/                 Automated tests
-docker-compose.yml     Local infrastructure
-Dockerfile             API image definition
+migrations/            Alembic migration history
+tests/                 Automated test suite
+docker-compose.yml     Local Docker Compose stack
+docker-compose.prod.yml
+                       Production Docker Compose override
+Dockerfile             Application image definition
 ```
 
-## Architecture Overview
+## Running Locally with Docker
 
-The project uses a layered backend structure:
-
-- `api/v1` receives HTTP requests and returns HTTP responses.
-- `schemas` define request and response data shapes.
-- `repositories` contain database operations.
-- `database/models` define database tables and relationships.
-- `services` isolate external systems such as email and S3-compatible storage.
-- `tasks` run background jobs through Celery.
-- `core` keeps configuration, security helpers, and app-level setup.
-
-This keeps route handlers focused on application flow while database logic,
-validation, security, and external integrations stay in separate modules.
-
-## Running with Docker
-
-### 1. Clone the repository
+### 1. Clone repository
 
 ```bash
 git clone https://github.com/JustVov4uk/online-cinema.git
@@ -217,30 +257,19 @@ Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-### 3. Start the full stack
+### 3. Start full stack
 
 ```bash
 docker compose up -d --build
 ```
 
-This starts:
-
-- FastAPI app
-- PostgreSQL
-- Redis
-- Celery worker
-- Celery Beat
-- MailHog
-- MinIO
-- Alembic migrator
-
-### 4. Check running containers
+### 4. Check containers
 
 ```bash
 docker compose ps
 ```
 
-### 5. Check the API
+### 5. Check API
 
 ```bash
 curl http://localhost:8000/api/v1/health/
@@ -263,31 +292,29 @@ Expected response:
 | MinIO Console | `http://localhost:9001` |
 | MinIO public bucket | `http://localhost:9000/online-cinema-media` |
 
-Default MinIO credentials are defined in `.env.example`.
-
 ## Running Locally with Poetry
 
 Docker is still recommended for PostgreSQL, Redis, MailHog, and MinIO.
 
-### 1. Install dependencies
+Install dependencies:
 
 ```bash
 poetry install
 ```
 
-### 2. Start infrastructure services
+Start infrastructure services:
 
 ```bash
 docker compose up -d db redis mailhog minio minio_setup
 ```
 
-### 3. Run migrations
+Run migrations:
 
 ```bash
 poetry run alembic upgrade head
 ```
 
-### 4. Start FastAPI development server
+Start development server:
 
 ```bash
 poetry run uvicorn src.main:app --reload
@@ -319,45 +346,40 @@ Build Docker image:
 docker build -t online-cinema-api:ci .
 ```
 
-Current test suite covers:
+The current test suite contains 67 tests and covers:
 
-- authentication
-- activation tokens
-- refresh tokens
-- password reset
-- password change
-- current user endpoint
-- movies
-- cart
-- orders
-- payments
-- purchased movies
-- avatar upload
-- token cleanup tasks
-- OpenAPI schema
+- authentication and account activation;
+- refresh tokens and logout;
+- password reset and password change;
+- current user endpoint;
+- movie catalog;
+- shopping cart;
+- orders;
+- payments;
+- purchased movies;
+- avatar upload;
+- token cleanup task;
+- OpenAPI schema.
 
 ## Environment Variables
 
-The project uses `.env` for local configuration.
+The project uses `.env` for local and deployment configuration.
 
-`.env.example` is committed to the repository as a safe template.
-`.env` should stay local and must not be committed.
+`.env.example` is committed as a safe template. `.env` must stay local and
+must not be committed.
 
 Main configuration groups:
 
-- project settings
-- PostgreSQL connection
-- Redis and Celery
-- MailHog SMTP
-- MinIO / S3-compatible storage
-- JWT settings
-- mock payment base URL
+- PostgreSQL connection;
+- Redis and Celery;
+- MailHog SMTP;
+- MinIO / S3-compatible storage;
+- JWT settings;
+- mock payment base URL.
 
 ## Database Migrations
 
-Alembic is used for database schema changes.
-
-Create a new migration:
+Create a migration:
 
 ```bash
 poetry run alembic revision --autogenerate -m "migration message"
@@ -377,17 +399,42 @@ poetry run alembic current
 
 ## CI Pipeline
 
-GitHub Actions runs on every push and pull request.
+GitHub Actions runs on push and pull request.
 
-The CI pipeline:
+The pipeline:
 
-1. Starts PostgreSQL and Redis services.
+1. Starts PostgreSQL and Redis.
 2. Installs Python 3.12 and Poetry.
-3. Installs project dependencies.
+3. Installs dependencies.
 4. Runs Ruff.
 5. Applies Alembic migrations.
 6. Runs Pytest.
-7. Builds the Docker image.
+7. Builds Docker image.
+
+## Deployment Notes
+
+The live demo is deployed on AWS EC2 with Docker Compose.
+
+Deployment setup:
+
+- Ubuntu 24.04 EC2 instance;
+- Docker and Docker Compose v2;
+- 2 GB swap file for stable work on a small instance;
+- PostgreSQL, Redis, MinIO, MailHog, Celery worker, Celery Beat, and API in containers;
+- HTTP traffic exposed on port `80` through `docker-compose.prod.yml`;
+- SSH restricted by security group.
+
+Production start command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+Current live Swagger:
+
+```text
+http://18.196.243.210/docs
+```
 
 ## Project Status
 
@@ -405,9 +452,13 @@ Implemented:
 - Docker Compose local infrastructure
 - GitHub Actions CI
 - Swagger/OpenAPI documentation
+- AWS EC2 deployment
 - Automated tests
 
-Planned:
+Possible future improvements:
 
-- Production deployment
-- Final deployment documentation
+- HTTPS and domain name
+- Dedicated production object storage
+- Managed PostgreSQL
+- More advanced admin permissions
+- API rate limiting
