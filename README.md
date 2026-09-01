@@ -223,6 +223,8 @@ src/
 migrations/            Alembic migration history
 tests/                 Automated test suite
 docker-compose.yml     Local Docker Compose stack
+docker-compose.prod.yml
+                       Production Docker Compose override
 Dockerfile             Application image definition
 ```
 
@@ -419,8 +421,14 @@ Deployment setup:
 - Docker and Docker Compose v2;
 - 2 GB swap file for stable work on a small instance;
 - PostgreSQL, Redis, MinIO, MailHog, Celery worker, Celery Beat, and API in containers;
-- HTTP traffic exposed on port `80`;
+- HTTP traffic exposed on port `80` through `docker-compose.prod.yml`;
 - SSH restricted by security group.
+
+Production start command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
 
 Current live Swagger:
 
