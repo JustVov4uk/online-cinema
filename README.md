@@ -49,7 +49,7 @@ This project demonstrates the kind of backend work that appears in real products
 | Object storage | MinIO / S3-compatible storage |
 | Dependency management | Poetry |
 | Code quality | Ruff |
-| Tests | Pytest, FastAPI TestClient |
+| Tests | Pytest, pytest-cov, FastAPI TestClient |
 | Containers | Docker, Docker Compose |
 | CI | GitHub Actions |
 | Deployment | AWS EC2 |
@@ -334,6 +334,12 @@ Run tests:
 poetry run pytest
 ```
 
+Run tests with coverage:
+
+```bash
+poetry run pytest --cov=src
+```
+
 Run migrations:
 
 ```bash
@@ -408,7 +414,7 @@ The pipeline:
 3. Installs dependencies.
 4. Runs Ruff.
 5. Applies Alembic migrations.
-6. Runs Pytest.
+6. Runs Pytest with coverage reporting.
 7. Builds Docker image.
 
 ## Deployment Notes
